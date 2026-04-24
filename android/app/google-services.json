@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "424414757289",
+    "project_id": "loredo-64837",
+    "storage_bucket": "loredo-64837.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424414757289:android:da14546b02b29fefa884b8",
+        "android_client_info": {
+          "package_name": "com.example.loredo_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCN_8FmUnQAVZxLg1wERPgIwJOonntCIuU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
