@@ -1,0 +1,139 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isCurrentUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function currentUserRole() {
+      return isSignedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    function isSales() {
+      return currentUserRole() == 'satisci';
+    }
+
+    function isManufacturing() {
+      return currentUserRole() == 'imalatci';
+    }
+
+    function canManageOrders() {
+      return isSales() || isAdmin();
+    }
+
+    function canManageCustomers() {
+      return isSales() || isAdmin();
+    }
+
+    function isValidUserCreate(userId) {
+      return isCurrentUser(userId)
+        && request.resource.data.keys().hasOnly([
+          'username',
+          'role',
+          'permissions',
+          'createdAt',
+        ])
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.role == 'beklemede'
+        && request.resource.data.permissions is list;
+    }
+
+    function isAdminRoleUpdate(userId) {
+      return isAdmin()
+        && request.auth.uid != userId
+        && resource.data.keys().hasOnly([
+          'username',
+          'role',
+          'permissions',
+          'createdAt',
+        ])
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['role'])
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.permissions == resource.data.permissions
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.role in ['satisci', 'imalatci', 'beklemede'];
+    }
+
+    match /users/{userId} {
+      allow create: if isValidUserCreate(userId);
+      allow read: if isCurrentUser(userId) || isAdmin();
+      allow update: if isAdminRoleUpdate(userId);
+      allow delete: if false;
+    }
+
+    match /musteriler/{musteriId} {
+      allow create: if canManageCustomers()
+        && request.resource.data.keys().hasOnly([
+          'ad',
+          'olusturanUserId',
+          'olusturanUsername',
+          'createdAt',
+        ])
+        && request.resource.data.ad is string
+        && request.resource.data.ad.size() > 0
+        && request.resource.data.olusturanUserId == request.auth.uid
+        && request.resource.data.olusturanUsername is string;
+
+      allow read: if canManageCustomers() || isManufacturing();
+      allow update, delete: if false;
+    }
+
+    match /siparisler/{siparisId} {
+      allow create: if canManageOrders()
+        && request.resource.data.keys().hasOnly([
+          'musteriId',
+          'urunler',
+          'siparisTarihi',
+          'siparisDetayi',
+          'olusturanUserId',
+          'olusturanUsername',
+          'createdAt',
+          'updatedAt',
+        ])
+        && request.resource.data.musteriId is string
+        && request.resource.data.urunler is list
+        && request.resource.data.urunler.size() > 0
+        && request.resource.data.siparisTarihi is timestamp
+        && request.resource.data.siparisDetayi is string
+        && request.resource.data.olusturanUserId == request.auth.uid
+        && request.resource.data.olusturanUsername is string;
+
+      allow read: if canManageOrders() || isManufacturing();
+
+      allow update: if canManageOrders()
+        && request.resource.data.keys().hasOnly([
+          'musteriId',
+          'urunler',
+          'siparisTarihi',
+          'siparisDetayi',
+          'olusturanUserId',
+          'olusturanUsername',
+          'createdAt',
+          'updatedAt',
+        ])
+        && request.resource.data.olusturanUserId == resource.data.olusturanUserId
+        && request.resource.data.olusturanUsername == resource.data.olusturanUsername
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.musteriId is string
+        && request.resource.data.urunler is list
+        && request.resource.data.urunler.size() > 0
+        && request.resource.data.siparisTarihi is timestamp
+        && request.resource.data.siparisDetayi is string;
+
+      allow delete: if canManageOrders();
+    }
+  }
+}

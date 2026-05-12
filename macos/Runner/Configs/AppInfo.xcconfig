@@ -10,5 +10,8 @@ PRODUCT_NAME = loredo_app
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.example.loredoApp
 
+// Team used by automatic signing and keychain sharing entitlements.
+DEVELOPMENT_TEAM = SY483ZCPCL
+
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
